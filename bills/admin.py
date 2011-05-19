@@ -4,21 +4,6 @@ from django.utils.translation import ugettext_lazy as _
 from django.http import HttpResponse
 from bills.models import *
 
-# Filters -------------------------------------------
-
-class TransactionTypeFilter(ChoicesFilterSpec):
-
-    def __init__(self, f, request, params, model, model_admin):
-        super(TransactionTypeFilter, self).__init__(f, request, params, 
-                                                    model, model_admin)
-
-    def choices(self, cl):
-        print cl, dir(cl)
-        return super(TransactionTypeFilter, self).choices(cl)
-
-FilterSpec.filter_specs.insert(0, (lambda f : \
-        getattr(f, 'is_active_filter', False), TransactionTypeFilter))
-
 class ProofInline(admin.TabularInline):
     model = Proof
     raw_id_fields = ('Bill',)
@@ -31,14 +16,14 @@ class TranscationInline(admin.StackedInline):
     extra = 1
 
 class BillAdmin(admin.ModelAdmin):
-    list_filter = ('Merchant',)
+    list_filter = ('Merchant', 'Type')
     list_display = ('Merchant', 'transactions',
-                    'attachments')
+                    'attachments', 'Type')
     search_fields = ('Merchant',)
 
     fieldsets = (
         ('Organization', {
-            'fields' : ('Merchant', 'BillId')
+            'fields' : ('Merchant', 'BillId', 'Type')
             }),
         )
     inlines = [TranscationInline, ProofInline]
@@ -50,16 +35,12 @@ class BillAdmin(admin.ModelAdmin):
 class TransactionAdmin(admin.ModelAdmin):
     list_display = ('bill_link', 'Amount', 'Type', 'Date', 'Description')
     list_filter = ('Type', 'Bill')
-    fields = ('Amount', 'Date', 'Type', 'Description')
-    readonly_fields = ('Amount', 'Date', 'Type')
+    fields = ('Amount', 'Date', 'Type', 'Description', 'Bill')
+    readonly_fields = ('Amount', 'Date', 'Type', 'Bill')
     list_display_links = ('Amount',)
 
     def has_add_permission(self, req):
         return False
-
-    def has_change_permission(self, req, obj=None):
-        return True
-        #return req.user.has_perm('can_modify_transaction')
 
     def has_delete_permission(self, req, obj=None):
         return False
