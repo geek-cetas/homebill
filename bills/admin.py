@@ -6,6 +6,7 @@ from bills.models import *
 
 class ProofInline(admin.TabularInline):
     model = Proof
+    fields = ('File', 'Receiptno')
     raw_id_fields = ('Bill',)
     max_num = 5
     fk_name = 'Bill'

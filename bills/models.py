@@ -9,8 +9,8 @@ PAYMENT_TYPES = (
     )
 BILL_TYPE = (
     ('M', 'Medical'),
-    ('T', 'Telephone'),
-    ('G', 'Grossary'),
+    ('T', 'Telephone/Broadband'),
+    ('G', 'Groceries'),
     ('H', 'Household'),
     ('R', 'Rent'),
     ('I', 'Miscellaneous')
@@ -82,6 +82,7 @@ class Transaction(models.Model):
 
 class Proof(models.Model):
     Bill = models.ForeignKey(Bill)
+    Receiptno = models.CharField(max_length=35, blank=True, null=True)
     File = models.FileField(null=True, upload_to='files')
 
     def get_display_html(self):
