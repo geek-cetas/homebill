@@ -16,6 +16,12 @@ BILL_TYPE = (
     ('I', 'Miscellaneous')
     )
 
+STATUS = (
+    (1, 'Open'),
+    (2, 'Inprogress'),
+    (0, 'Closed'),
+    )
+
 class Bill(models.Model):
     Merchant = models.CharField(max_length=100)
     BillId = models.CharField(max_length=100,
@@ -139,12 +145,16 @@ class Periodical(models.Model):
 
 class Reimbursement(models.Model):
     Bills = models.ManyToManyField(Bill, null=True, blank=True)
+    Title = models.CharField(max_length=20)
     User = models.ForeignKey(User)
+    Status = models.IntegerField(choices=STATUS, default=1)
     Amount = models.FloatField(null=True, blank=True,
                                 help_text="Amount to be reimbursed")
 
     def bill_display(self):
         bills = self.Bills.all()
+        if len(bills) == 0:
+            return ""
         html = "<a href='../bill/?id__in=%(ids)s'>Total : %(count)d</a>"
         ids = map(lambda obj1 : "%s" % (obj1.id), bills)
         return html % {'ids' : reduce(lambda x, y : "%s,%s" % (x, y),

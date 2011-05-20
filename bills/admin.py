@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.admin.filterspecs import FilterSpec, ChoicesFilterSpec
 from django.utils.translation import ugettext_lazy as _
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
+from django.conf.urls.defaults import patterns, url
 from bills.models import *
 from bills.forms import *
 
@@ -30,8 +31,6 @@ class UserAdmin(admin.ModelAdmin):
         return super(UserAdmin, self).formfield_for_foreignkey(\
                                         db_field, req, **kwargs)
 
-
-
 class BillAdmin(UserAdmin):
     list_filter = ('Merchant', 'Type')
     list_display = ('Merchant', 'transactions',
@@ -44,6 +43,16 @@ class BillAdmin(UserAdmin):
             }),
         )
     inlines = [TranscationInline, ProofInline]
+
+    def get_urls(self):
+        urls = super(BillAdmin, self).get_urls()
+        model_urls = patterns('',
+            (r'(?P<obj_id>\d+)/files/(?P<filename>.*)/$',
+                self.serve_file))
+        return model_urls + urls
+
+    def serve_file(self, req, obj_id, filename):
+        return HttpResponseRedirect('/static/files/%s' % filename)
 
 class TransactionAdmin(UserAdmin):
     list_display = ('bill_link', 'Amount', 'Type', 'Date', 'Description')
@@ -70,9 +79,8 @@ class PeriodicalAdmin(UserAdmin):
         return qs.filter(User = req.user)
 
 class ReimbursementAdmin(UserAdmin):
-    list_display = ('Amount', 'bill_display')
+    list_display = ('Title', 'Amount', 'bill_display')
     exclude = ('User',)
-    form = ReimbursementForm
 
     def formfield_for_manytomany(self, db_field, req, **kwargs):
         if db_field.name == 'Bills':
