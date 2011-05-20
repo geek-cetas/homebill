@@ -25,7 +25,10 @@ class Bill(models.Model):
     User = models.ForeignKey(User)
 
     def __str__(self):
-        return self.Merchant
+        trans = Transaction.objects.get(Bill=self)
+        date = trans.Date.strftime("%d/%m/%Y")
+        return "%(merchant)s - %(date)s" % {'merchant' : self.Merchant,
+                                            'date' : date}
 
     def transactions(self):
         transactions = Transaction.objects.filter(Bill=self)
@@ -94,3 +97,28 @@ class Proof(models.Model):
         return anchor % {'url' : url, 'img' : img,
                             'link' : filename}
 
+class Periodical(models.Model):
+    User = models.ForeignKey(User)
+    Title = models.CharField(max_length=50)
+    Description = models.TextField(null=True, blank=True)
+    Billingdate = models.DateField()
+    Duedate = models.DateField()
+    Bills = models.ManyToManyField(Bill, null=True, blank=True)
+    title = 'Periodicals'
+
+    def billedon(self):
+        return self.Billingdate.strftime("%d")
+
+    def dueby(self):
+        return self.Duedate.strftime("%d")
+
+    def duecount(self):
+        bills = self.Bills.all()
+        count = 0
+        for bill in bills:
+            trans = Transaction.objects.get(Bill=bill)
+            if trans:
+                if self.Duedate < trans.Date:
+                    count += 1
+        print 'COunt', count
+        return count

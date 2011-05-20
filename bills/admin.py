@@ -29,6 +29,10 @@ class BillAdmin(admin.ModelAdmin):
         )
     inlines = [TranscationInline, ProofInline]
 
+    def queryset(self, req):
+        qs = super(BillAdmin, self).queryset(req)
+        return qs.filter(User = req.user)
+
     def save_model(self, request, obj, form, change):
         obj.User = request.user
         super(BillAdmin, self).save_model(request, obj, form, change)
@@ -46,6 +50,19 @@ class TransactionAdmin(admin.ModelAdmin):
     def has_delete_permission(self, req, obj=None):
         return False
 
+class PeriodicalAdmin(admin.ModelAdmin):
+    list_display = ('Title', 'billedon', 'dueby', 'duecount')
+    exclude = ('User',)
+
+    def queryset(self, req):
+        qs = super(PeriodicalAdmin, self).queryset(req)
+        return qs.filter(User = req.user)
+
+    def save_model(self, request, obj, form, change):
+        obj.User = request.user
+        super(PeriodicalAdmin, self).save_model(request, obj,
+                                                form, change)
+
 admin.site.register(Bill, BillAdmin)
 admin.site.register(Transaction, TransactionAdmin)
-
+admin.site.register(Periodical, PeriodicalAdmin)
