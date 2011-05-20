@@ -62,9 +62,8 @@ class TransactionAdmin(UserAdmin):
         return Transaction.objects.filter(Bill__User = req.user)
 
 class PeriodicalAdmin(UserAdmin):
-    list_display = ('Title', 'billedon', 'dueby', 'duecount')
-    exclude = ('User',)
-    form = PeriodicalForm
+    list_display = ('Title', 'billedon', 'dueby', 'duecount', 'bills')
+    fields = ('Title', 'Description', 'Billingdate', 'Duedate', 'Bills')
 
     def queryset(self, req):
         qs = super(PeriodicalAdmin, self).queryset(req)

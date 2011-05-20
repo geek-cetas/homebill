@@ -30,10 +30,13 @@ class Bill(models.Model):
         return "%(merchant)s - %(date)s" % {'merchant' : self.Merchant,
                                             'date' : date}
 
-    def get_link(self):
-        bill_url =  '<a href="../bill/%(billid)d">%(merchant)s</a>'
+    def get_link(self, date=False):
+        bill_url =  '<a href="../bill/%(billid)d">%(merchant)s ' \
+                    '%(date)s</a>'
         return bill_url % {'billid' : self.id,
-                            'merchant' : self.Merchant}
+                            'merchant' : self.Merchant,
+                            'date' : self.date.strftime("%d/%m/%Y") \
+                                if date else ''}
 
     def transactions(self):
         transactions = Transaction.objects.filter(Bill=self)
@@ -124,6 +127,16 @@ class Periodical(models.Model):
                     count += 1
         return count
 
+    def bills(self):
+        bills = self.Bills.all()
+        html = "<ul>%(items)s</ul>"
+        items = []
+        for bill in bills:
+            items.append("<li>%(link)s</li>" % {'link' : bill.get_link()})
+        items = reduce(lambda l1, l2 : l1 + l2, items)
+        return html % {'items' : items}
+    bills.allow_tags = True
+
 class Reimbursement(models.Model):
     Bills = models.ManyToManyField(Bill, null=True, blank=True)
     User = models.ForeignKey(User)
@@ -132,9 +145,10 @@ class Reimbursement(models.Model):
 
     def bill_display(self):
         bills = self.Bills.all()
-        html = "<ul>"
-        for bill in bills:
-            html += "<li>%s</li>" % bill.get_link()
-        return "%s</ul>" % html
+        html = "<a href='../bill/?id__in=%(ids)s'>Total : %(count)d</a>"
+        ids = map(lambda obj1 : "%s" % (obj1.id), bills)
+        return html % {'ids' : reduce(lambda x, y : "%s,%s" % (x, y),
+                        ids),
+                        'count' : len(bills) }
     bill_display.allow_tags = True
     bill_display.short_description = 'Bills'
