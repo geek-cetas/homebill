@@ -30,6 +30,11 @@ class Bill(models.Model):
         return "%(merchant)s - %(date)s" % {'merchant' : self.Merchant,
                                             'date' : date}
 
+    def get_link(self):
+        bill_url =  '<a href="../bill/%(billid)d">%(merchant)s</a>'
+        return bill_url % {'billid' : self.id,
+                            'merchant' : self.Merchant}
+
     def transactions(self):
         transactions = Transaction.objects.filter(Bill=self)
         text = ""
@@ -61,9 +66,7 @@ class Transaction(models.Model):
     Description = models.TextField(null=True, blank=True)
 
     def bill_link(self):
-        bill_url =  '<a href="../bill/%(billid)d">%(merchant)s</a>'
-        return bill_url % {'billid' : self.Bill.id,
-                            'merchant' : self.Bill.Merchant}
+        return self.Bill.get_link()
     bill_link.allow_tags = True
     bill_link.short_description = 'Merchant'
     bill_link.admin_order_field = 'Bill'
@@ -104,7 +107,6 @@ class Periodical(models.Model):
     Billingdate = models.DateField()
     Duedate = models.DateField()
     Bills = models.ManyToManyField(Bill, null=True, blank=True)
-    title = 'Periodicals'
 
     def billedon(self):
         return self.Billingdate.strftime("%d")
@@ -120,5 +122,19 @@ class Periodical(models.Model):
             if trans:
                 if self.Duedate < trans.Date:
                     count += 1
-        print 'COunt', count
         return count
+
+class Reimbursement(models.Model):
+    Bills = models.ManyToManyField(Bill, null=True, blank=True)
+    User = models.ForeignKey(User)
+    Amount = models.FloatField(null=True, blank=True,
+                                help_text="Amount to be reimbursed")
+
+    def bill_display(self):
+        bills = self.Bills.all()
+        html = "<ul>"
+        for bill in bills:
+            html += "<li>%s</li>" % bill.get_link()
+        return "%s</ul>" % html
+    bill_display.allow_tags = True
+    bill_display.short_description = 'Bills'
